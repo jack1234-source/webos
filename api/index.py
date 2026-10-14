@@ -5,11 +5,14 @@ Optimized for Vercel Serverless Functions (ASGI) with Neon Postgres, Upstash Red
 
 import os
 import sys
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import uuid
 
 from fastapi import FastAPI, HTTPException, Query, Body
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -39,6 +42,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+DIST_DIR = Path(__file__).resolve().parent.parent / "dist"
+if (DIST_DIR / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="assets")
 
 # Environment configuration
 DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
@@ -500,3 +507,25 @@ def broadcast_event(req: BroadcastRequest):
         "payload": req.payload,
         "dispatched_at": datetime.utcnow().isoformat(),
     }
+
+
+def frontend_index():
+    index_file = DIST_DIR / "index.html"
+    if not index_file.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail="Frontend build not found. Run `npm run build` first.",
+        )
+    return FileResponse(index_file)
+
+
+@app.get("/", include_in_schema=False)
+def serve_frontend_root():
+    return frontend_index()
+
+
+@app.get("/{path:path}", include_in_schema=False)
+def serve_frontend(path: str):
+    if path == "api" or path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not found")
+    return frontend_index()

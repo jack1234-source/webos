@@ -3,6 +3,7 @@ import { Terminal, Folder, Layers, Activity, FileText, Settings, Calculator, Plu
 import { useOS } from '../../context/OSContext';
 import { soundService } from '../../services/soundService';
 import { vfsService } from '../../services/vfsService';
+import desktopWallpaper from '../../assets/images/os_desktop_wallpaper_1791094439680.jpg';
 
 interface DesktopIconItem {
   id: string;
@@ -129,7 +130,7 @@ export const Desktop: React.FC = () => {
           <div
             className="absolute inset-0 bg-cover bg-center transition-all duration-500"
             style={{
-              backgroundImage: `url(/src/assets/images/os_desktop_wallpaper_1791094439680.jpg)`,
+              backgroundImage: `url(${desktopWallpaper})`,
               filter: 'brightness(0.9) contrast(1.05)',
             }}
           >
